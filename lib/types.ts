@@ -105,6 +105,14 @@ export const ALL_TOPICS: Topic[] = [
   "beaute",
 ];
 
+// Portefeuille serveur d'un utilisateur du connecteur (identifié par uid)
+export interface Wallet {
+  balance: number;
+  lifetime: number;
+  views: number;
+  clicks: number;
+}
+
 // Rémunération côté utilisateur
 export const PAYOUTS = {
   impression: 0.05,

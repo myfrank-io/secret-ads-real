@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { trackEvent } from "@/lib/store";
-import { PAYOUTS, TrackEvent } from "@/lib/types";
+import { creditWallet, trackEvent } from "@/lib/store";
+import { PAYOUTS, TrackEvent, Wallet } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +34,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const { campaignId, event } = (body ?? {}) as {
+  const { campaignId, event, uid } = (body ?? {}) as {
     campaignId?: unknown;
     event?: unknown;
+    uid?: unknown;
   };
 
   if (
@@ -77,5 +78,15 @@ export async function POST(request: Request) {
         ? PAYOUTS.click
         : PAYOUTS.conversionCashback;
 
-  return NextResponse.json({ ok: true, earned }, { headers: CORS_HEADERS });
+  // uid optionnel : les gains remontent sur le portefeuille serveur de
+  // l'utilisateur qui a installé le connecteur
+  let wallet: Wallet | undefined;
+  if (typeof uid === "string" && /^[\w-]{1,64}$/.test(uid)) {
+    wallet = creditWallet(uid, event as TrackEvent);
+  }
+
+  return NextResponse.json(
+    wallet ? { ok: true, earned, wallet } : { ok: true, earned },
+    { headers: CORS_HEADERS }
+  );
 }

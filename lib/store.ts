@@ -5,9 +5,11 @@ import {
   DailyMetric,
   LIMITS,
   LLMTarget,
+  PAYOUTS,
   ServedAd,
   Topic,
   TrackEvent,
+  Wallet,
 } from "./types";
 
 // Générateur pseudo-aléatoire déterministe (les métriques de démo sont stables)
@@ -164,6 +166,7 @@ function generateDaily(campaign: Campaign, seed: number): DailyMetric[] {
 interface Store {
   campaigns: Campaign[];
   metrics: Map<string, DailyMetric[]>;
+  wallets: Map<string, Wallet>;
   seq: number;
 }
 
@@ -177,7 +180,7 @@ function createStore(): Store {
   campaigns.forEach((c, idx) => {
     metrics.set(c.id, generateDaily(c, 1000 + idx * 97));
   });
-  return { campaigns, metrics, seq: 0 };
+  return { campaigns, metrics, wallets: new Map(), seq: 0 };
 }
 
 // Persiste entre les requêtes d'une même instance (dev + serverless chaude).
@@ -347,4 +350,40 @@ export function trackEvent(campaignId: string, event: TrackEvent): TrackResult {
     entry.revenue = Math.round((entry.revenue + AVG_ORDER_VALUE) * 100) / 100;
   }
   return { ok: true };
+}
+
+const MAX_WALLETS = 10000;
+
+const EMPTY_WALLET: Wallet = { balance: 0, lifetime: 0, views: 0, clicks: 0 };
+
+/**
+ * Crédite le portefeuille serveur d'un utilisateur du connecteur.
+ * Le uid vient du snippet SDK installé par l'utilisateur sur son LLM.
+ */
+export function creditWallet(uid: string, event: TrackEvent): Wallet {
+  const store = getStore();
+  const existing = store.wallets.get(uid);
+  if (!existing && store.wallets.size >= MAX_WALLETS) {
+    // Plafond anti-abus : on répond sans persister de nouveau portefeuille
+    return { ...EMPTY_WALLET };
+  }
+  const wallet = existing ?? { ...EMPTY_WALLET };
+  const amount =
+    event === "impression"
+      ? PAYOUTS.impression
+      : event === "click"
+        ? PAYOUTS.click
+        : PAYOUTS.conversionCashback;
+  wallet.balance = Math.round((wallet.balance + amount) * 100) / 100;
+  wallet.lifetime = Math.round((wallet.lifetime + amount) * 100) / 100;
+  if (event === "impression") wallet.views += 1;
+  if (event === "click") wallet.clicks += 1;
+  store.wallets.set(uid, wallet);
+  return { ...wallet };
+}
+
+export function getWallet(uid: string): Wallet {
+  const store = getStore();
+  const wallet = store.wallets.get(uid);
+  return wallet ? { ...wallet } : { ...EMPTY_WALLET };
 }

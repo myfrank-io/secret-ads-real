@@ -35,13 +35,20 @@ const TRACK_EXAMPLE = `curl -X POST "https://VOTRE-DOMAINE/api/track" \\
 const SDK_EXAMPLE = `<!-- 1. Un conteneur là où la barre de chargement s'affiche -->
 <div data-secret-ads></div>
 
-<!-- 2. Le SDK : il remplit tous les conteneurs [data-secret-ads] -->
+<!-- 2. Le SDK : il remplit tous les conteneurs [data-secret-ads].
+     data-uid = l'identifiant Secret Ads de l'utilisateur qui a installé
+     le connecteur : ses gains remontent sur son portefeuille. -->
 <script
   src="https://VOTRE-DOMAINE/sdk.js"
   data-llm="claude"
   data-topics="tech,voyage"
+  data-uid="usr_votre_id"
   defer
 ></script>`;
+
+const WALLET_EXAMPLE = `curl "https://VOTRE-DOMAINE/api/wallet?uid=usr_votre_id"
+# → { "ok": true, "uid": "usr_votre_id",
+#     "wallet": { "balance": 4.35, "lifetime": 12.85, "views": 41, "clicks": 9 } }`;
 
 export default function ConnectorPage() {
   return (
@@ -99,7 +106,23 @@ export default function ConnectorPage() {
       </section>
 
       <section className="section">
-        <h2>4. Playground</h2>
+        <h2>4. Le portefeuille de l&apos;utilisateur</h2>
+        <p className="muted small" style={{ marginBottom: "0.8rem" }}>
+          Quand le SDK (ou votre intégration) envoie un <code>uid</code> avec
+          les événements, les gains s&apos;accumulent sur le portefeuille
+          serveur de cet utilisateur — quel que soit le LLM ou le site hôte.
+          Consultez-le avec <code>GET /api/wallet</code>. Essayez le connecteur
+          installé en conditions réelles sur la{" "}
+          <a href="/demo" style={{ color: "var(--accent)" }}>
+            page de démo
+          </a>
+          .
+        </p>
+        <pre className="codeblock">{WALLET_EXAMPLE}</pre>
+      </section>
+
+      <section className="section">
+        <h2>5. Playground</h2>
         <ConnectorPlayground />
       </section>
     </main>

@@ -1,7 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import LoadingBarAd from "@/components/LoadingBarAd";
+import {
+  EarnEvent,
+  EarnState,
+  EMPTY_EARN_STATE,
+  getOrCreateUid,
+  loadEarnState,
+  saveEarnState,
+} from "@/lib/earn-state";
 import {
   ALL_LLMS,
   ALL_TOPICS,
@@ -13,66 +22,6 @@ import {
   TOPIC_LABELS,
   Topic,
 } from "@/lib/types";
-
-const STORAGE_KEY = "secret-ads-earn-v1";
-
-interface EarnEvent {
-  id: string;
-  ts: number;
-  type: "impression" | "click" | "conversion" | "cashout";
-  label: string;
-  amount: number; // négatif pour un retrait
-}
-
-interface EarnState {
-  topics: Topic[];
-  balance: number;
-  lifetime: number;
-  views: number;
-  clicks: number;
-  history: EarnEvent[];
-}
-
-const EMPTY_STATE: EarnState = {
-  topics: [],
-  balance: 0,
-  lifetime: 0,
-  views: 0,
-  clicks: 0,
-  history: [],
-};
-
-function loadState(): EarnState {
-  if (typeof window === "undefined") return EMPTY_STATE;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY_STATE;
-    const parsed = JSON.parse(raw) as Partial<EarnState>;
-    const history = Array.isArray(parsed.history)
-      ? (parsed.history as Partial<EarnEvent>[]).map((h, i) => ({
-          id: typeof h.id === "string" ? h.id : `legacy-${i}-${h.ts ?? i}`,
-          ts: typeof h.ts === "number" ? h.ts : 0,
-          type: (h.type ?? "impression") as EarnEvent["type"],
-          label: typeof h.label === "string" ? h.label : "",
-          amount: typeof h.amount === "number" ? h.amount : 0,
-        }))
-      : [];
-    return {
-      topics: Array.isArray(parsed.topics)
-        ? (parsed.topics.filter((t) =>
-            (ALL_TOPICS as string[]).includes(t as string)
-          ) as Topic[])
-        : [],
-      balance: typeof parsed.balance === "number" ? parsed.balance : 0,
-      lifetime: typeof parsed.lifetime === "number" ? parsed.lifetime : 0,
-      views: typeof parsed.views === "number" ? parsed.views : 0,
-      clicks: typeof parsed.clicks === "number" ? parsed.clicks : 0,
-      history,
-    };
-  } catch {
-    return EMPTY_STATE;
-  }
-}
 
 function eur(v: number): string {
   return v.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
@@ -101,7 +50,8 @@ interface Session {
 
 export default function EarnPage() {
   const [mounted, setMounted] = useState(false);
-  const [state, setState] = useState<EarnState>(EMPTY_STATE);
+  const [uid, setUid] = useState("");
+  const [state, setState] = useState<EarnState>(EMPTY_EARN_STATE);
   const [draftTopics, setDraftTopics] = useState<Topic[]>([]);
   const [editingTopics, setEditingTopics] = useState(false);
   const [llm, setLlm] = useState<LLMTarget>("claude");
@@ -121,17 +71,14 @@ export default function EarnPage() {
   }, [session]);
 
   useEffect(() => {
-    setState(loadState());
+    setState(loadEarnState());
+    setUid(getOrCreateUid());
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // stockage indisponible : l'app reste utilisable sans persistance
-    }
+    saveEarnState(state);
   }, [state, mounted]);
 
   useEffect(() => {
@@ -177,7 +124,9 @@ export default function EarnPage() {
     fetch("/api/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ campaignId, event }),
+      body: JSON.stringify(
+        uid ? { campaignId, event, uid } : { campaignId, event }
+      ),
     }).catch(() => {
       // le tracking annonceur est best-effort côté démo
     });
@@ -381,6 +330,27 @@ export default function EarnPage() {
           <div className="label">Clics</div>
           <div className="value">{state.clicks}</div>
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: "1.5rem" }}>
+        <div className="card-title">Installez Secret Ads sur votre LLM</div>
+        <p className="muted small" style={{ marginBottom: "0.8rem" }}>
+          Collez ce snippet dans l&apos;interface de votre LLM préféré (ou
+          votre extension) : les pubs s&apos;affichent pendant la génération et
+          vos gains remontent automatiquement sur votre identifiant{" "}
+          <code>{uid || "…"}</code>, où que vous soyez.
+        </p>
+        <pre className="codeblock" style={{ marginBottom: "0.9rem" }}>
+          {`<div data-secret-ads></div>
+<script src="${typeof window !== "undefined" ? window.location.origin : ""}/sdk.js"
+  data-llm="claude"
+  data-topics="${state.topics.join(",")}"
+  data-uid="${uid}"
+  defer></script>`}
+        </pre>
+        <Link href="/demo" className="btn btn-primary btn-sm">
+          Voir la démo : mon LLM avec Secret Ads installé →
+        </Link>
       </div>
 
       <div className="chart-grid">

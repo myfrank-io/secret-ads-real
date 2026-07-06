@@ -25,6 +25,7 @@ export default function RootLayout({
             <nav className="nav-links">
               <Link href="/advertiser">Annonceurs</Link>
               <Link href="/earn">Gagner de l&apos;argent</Link>
+              <Link href="/demo">Démo</Link>
               <Link href="/connector">Connecteur</Link>
             </nav>
           </div>

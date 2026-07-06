@@ -3,7 +3,7 @@
  * portant l'attribut [data-secret-ads], et trace impression + clics.
  *
  * <div data-secret-ads></div>
- * <script src="https://VOTRE-DOMAINE/sdk.js" data-llm="claude" data-topics="tech" defer></script>
+ * <script src="https://VOTRE-DOMAINE/sdk.js" data-llm="claude" data-topics="tech" data-uid="usr_votre_id" defer></script>
  */
 (function () {
   "use strict";
@@ -21,13 +21,20 @@
 
   var llm = script.getAttribute("data-llm") || "claude";
   var topics = script.getAttribute("data-topics") || "";
+  // Identifiant personnel de l'utilisateur qui a installé le connecteur :
+  // ses gains (vues, clics) remontent sur son portefeuille Secret Ads
+  var uid = script.getAttribute("data-uid") || "";
 
   function track(campaignId, event) {
     try {
       fetch(origin + "/api/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ campaignId: campaignId, event: event }),
+        body: JSON.stringify(
+          uid
+            ? { campaignId: campaignId, event: event, uid: uid }
+            : { campaignId: campaignId, event: event }
+        ),
         keepalive: true,
       }).catch(function () {
         /* best effort */

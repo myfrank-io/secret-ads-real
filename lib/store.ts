@@ -1,0 +1,296 @@
+import {
+  Campaign,
+  CampaignWithMetrics,
+  DailyMetric,
+  LLMTarget,
+  ServedAd,
+  Topic,
+  TrackEvent,
+} from "./types";
+
+// Générateur pseudo-aléatoire déterministe (les métriques de démo sont stables)
+function mulberry32(seed: number) {
+  let a = seed;
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function dateNDaysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+const SEED_CAMPAIGNS: Campaign[] = [
+  {
+    id: "cmp_notion",
+    name: "Notion AI — Lancement Q3",
+    advertiser: "Notion",
+    topic: "tech",
+    targets: ["claude", "chatgpt", "gemini"],
+    status: "active",
+    budget: 12000,
+    cpc: 0.85,
+    headline: "Notion AI organise vos idées pendant que l'IA réfléchit",
+    body: "Essayez l'espace de travail tout-en-un préféré des équipes produit.",
+    cta: "Essayer gratuitement",
+    url: "https://www.notion.so",
+    color: "#3987e5",
+    createdAt: dateNDaysAgo(30),
+  },
+  {
+    id: "cmp_airfrance",
+    name: "Air France — Été 2026",
+    advertiser: "Air France",
+    topic: "voyage",
+    targets: ["chatgpt", "gemini", "perplexity"],
+    status: "active",
+    budget: 25000,
+    cpc: 1.2,
+    headline: "Tokyo dès 512 € A/R — vos vacances décollent",
+    body: "Réservez avant le 31 juillet et cumulez des miles doublés.",
+    cta: "Voir les vols",
+    url: "https://www.airfrance.fr",
+    color: "#199e70",
+    createdAt: dateNDaysAgo(24),
+  },
+  {
+    id: "cmp_backmarket",
+    name: "Back Market — Rentrée reconditionnée",
+    advertiser: "Back Market",
+    topic: "tech",
+    targets: ["claude", "mistral"],
+    status: "active",
+    budget: 8000,
+    cpc: 0.6,
+    headline: "Un MacBook reconditionné à -40 %, garanti 2 ans",
+    body: "La tech premium sans le prix du neuf, vérifiée par des pros.",
+    cta: "J'en profite",
+    url: "https://www.backmarket.fr",
+    color: "#c98500",
+    createdAt: dateNDaysAgo(18),
+  },
+  {
+    id: "cmp_qonto",
+    name: "Qonto — Compte pro freelances",
+    advertiser: "Qonto",
+    topic: "finance",
+    targets: ["claude", "chatgpt", "mistral", "perplexity"],
+    status: "active",
+    budget: 15000,
+    cpc: 2.1,
+    headline: "Votre compte pro ouvert en 10 minutes, sans paperasse",
+    body: "3 mois offerts pour les freelances qui se lancent.",
+    cta: "Ouvrir mon compte",
+    url: "https://qonto.com",
+    color: "#9085e9",
+    createdAt: dateNDaysAgo(14),
+  },
+  {
+    id: "cmp_decathlon",
+    name: "Decathlon — Trail Series",
+    advertiser: "Decathlon",
+    topic: "sport",
+    targets: ["gemini", "chatgpt"],
+    status: "paused",
+    budget: 6000,
+    cpc: 0.45,
+    headline: "Équipez votre premier trail à moins de 120 €",
+    body: "Chaussures, sac, bâtons : le pack complet testé en montagne.",
+    cta: "Découvrir le pack",
+    url: "https://www.decathlon.fr",
+    color: "#e66767",
+    createdAt: dateNDaysAgo(40),
+  },
+];
+
+const DAYS_OF_HISTORY = 30;
+
+function generateDaily(campaign: Campaign, seed: number): DailyMetric[] {
+  const rand = mulberry32(seed);
+  const daily: DailyMetric[] = [];
+  const scale = campaign.budget / 10000; // les gros budgets font plus de volume
+  for (let i = DAYS_OF_HISTORY - 1; i >= 0; i--) {
+    const weekBoost = 0.8 + 0.4 * rand();
+    const impressions = Math.round((2000 + rand() * 6000) * scale * weekBoost);
+    const ctr = 0.025 + rand() * 0.03;
+    const clicks = Math.round(impressions * ctr);
+    const cvr = 0.04 + rand() * 0.06;
+    const conversions = Math.round(clicks * cvr);
+    const spend = Math.round(clicks * campaign.cpc * 100) / 100;
+    const aov = 45 + rand() * 120; // panier moyen
+    const revenue = Math.round(conversions * aov * 100) / 100;
+    daily.push({
+      date: dateNDaysAgo(i),
+      impressions,
+      clicks,
+      conversions,
+      spend,
+      revenue,
+    });
+  }
+  return daily;
+}
+
+interface Store {
+  campaigns: Campaign[];
+  metrics: Map<string, DailyMetric[]>;
+}
+
+function createStore(): Store {
+  const metrics = new Map<string, DailyMetric[]>();
+  SEED_CAMPAIGNS.forEach((c, idx) => {
+    metrics.set(c.id, generateDaily(c, 1000 + idx * 97));
+  });
+  return { campaigns: [...SEED_CAMPAIGNS], metrics };
+}
+
+// Persiste entre les requêtes d'une même instance (dev + serverless chaude)
+const globalStore = globalThis as unknown as { __secretAdsStore?: Store };
+
+export function getStore(): Store {
+  if (!globalStore.__secretAdsStore) {
+    globalStore.__secretAdsStore = createStore();
+  }
+  return globalStore.__secretAdsStore;
+}
+
+function computeTotals(daily: DailyMetric[]) {
+  const sum = daily.reduce(
+    (acc, d) => ({
+      impressions: acc.impressions + d.impressions,
+      clicks: acc.clicks + d.clicks,
+      conversions: acc.conversions + d.conversions,
+      spend: acc.spend + d.spend,
+      revenue: acc.revenue + d.revenue,
+    }),
+    { impressions: 0, clicks: 0, conversions: 0, spend: 0, revenue: 0 }
+  );
+  return {
+    ...sum,
+    ctr: sum.impressions > 0 ? (sum.clicks / sum.impressions) * 100 : 0,
+    cvr: sum.clicks > 0 ? (sum.conversions / sum.clicks) * 100 : 0,
+    cpa: sum.conversions > 0 ? sum.spend / sum.conversions : 0,
+    roas: sum.spend > 0 ? sum.revenue / sum.spend : 0,
+  };
+}
+
+export function getCampaignsWithMetrics(): CampaignWithMetrics[] {
+  const store = getStore();
+  return store.campaigns.map((c) => {
+    const daily = store.metrics.get(c.id) ?? [];
+    return { ...c, daily, totals: computeTotals(daily) };
+  });
+}
+
+export function addCampaign(input: {
+  name: string;
+  advertiser: string;
+  topic: Topic;
+  targets: LLMTarget[];
+  budget: number;
+  cpc: number;
+  headline: string;
+  body: string;
+  cta: string;
+  url: string;
+}): Campaign {
+  const store = getStore();
+  const campaign: Campaign = {
+    id: `cmp_${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`,
+    status: "active",
+    color: "#3987e5",
+    createdAt: new Date().toISOString().slice(0, 10),
+    ...input,
+  };
+  store.campaigns.unshift(campaign);
+  // Une nouvelle campagne démarre à zéro : une seule journée vide (aujourd'hui)
+  store.metrics.set(campaign.id, [
+    {
+      date: dateNDaysAgo(0),
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      spend: 0,
+      revenue: 0,
+    },
+  ]);
+  return campaign;
+}
+
+export function setCampaignStatus(
+  id: string,
+  status: Campaign["status"]
+): Campaign | null {
+  const store = getStore();
+  const campaign = store.campaigns.find((c) => c.id === id);
+  if (!campaign) return null;
+  campaign.status = status;
+  return campaign;
+}
+
+export function serveAd(params: {
+  llm?: string;
+  topics?: Topic[];
+}): ServedAd | null {
+  const store = getStore();
+  let pool = store.campaigns.filter((c) => c.status === "active");
+  if (params.llm) {
+    const llm = params.llm as LLMTarget;
+    const byLlm = pool.filter((c) => c.targets.includes(llm));
+    if (byLlm.length > 0) pool = byLlm;
+  }
+  if (params.topics && params.topics.length > 0) {
+    const byTopic = pool.filter((c) => params.topics!.includes(c.topic));
+    if (byTopic.length > 0) pool = byTopic;
+  }
+  if (pool.length === 0) return null;
+  const campaign = pool[Math.floor(Math.random() * pool.length)];
+  return {
+    id: `ad_${campaign.id}_${Date.now().toString(36)}`,
+    campaignId: campaign.id,
+    advertiser: campaign.advertiser,
+    headline: campaign.headline,
+    body: campaign.body,
+    cta: campaign.cta,
+    url: campaign.url,
+    color: campaign.color,
+    topic: campaign.topic,
+  };
+}
+
+export function trackEvent(campaignId: string, event: TrackEvent): boolean {
+  const store = getStore();
+  const campaign = store.campaigns.find((c) => c.id === campaignId);
+  if (!campaign) return false;
+  const daily = store.metrics.get(campaignId);
+  if (!daily || daily.length === 0) return false;
+  const today = dateNDaysAgo(0);
+  let entry = daily[daily.length - 1];
+  if (entry.date !== today) {
+    entry = {
+      date: today,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      spend: 0,
+      revenue: 0,
+    };
+    daily.push(entry);
+  }
+  if (event === "impression") entry.impressions += 1;
+  if (event === "click") {
+    entry.clicks += 1;
+    entry.spend = Math.round((entry.spend + campaign.cpc) * 100) / 100;
+  }
+  if (event === "conversion") {
+    entry.conversions += 1;
+    entry.revenue = Math.round((entry.revenue + 80) * 100) / 100;
+  }
+  return true;
+}

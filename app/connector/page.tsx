@@ -106,6 +106,29 @@ export default function ConnectorPage() {
       </section>
 
       <section className="section">
+        <h2>3 bis. Extension navigateur (côté utilisateur)</h2>
+        <p className="muted small" style={{ marginBottom: "0.8rem" }}>
+          Pour les LLM fermés (claude.ai, chatgpt.com, gemini.google.com,
+          chat.mistral.ai, perplexity.ai), l&apos;utilisateur installe le
+          connecteur dans SON navigateur :{" "}
+          <a
+            href="https://www.tampermonkey.net/"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "var(--accent)" }}
+          >
+            Tampermonkey
+          </a>{" "}
+          puis <a href="/userscript.user.js" style={{ color: "var(--accent)" }}>
+            /userscript.user.js
+          </a>
+          . Le script détecte le LLM, affiche la pub pendant la génération et
+          crédite le portefeuille de l&apos;utilisateur — sans rien demander
+          aux plateformes.
+        </p>
+      </section>
+
+      <section className="section">
         <h2>4. Le portefeuille de l&apos;utilisateur</h2>
         <p className="muted small" style={{ marginBottom: "0.8rem" }}>
           Quand le SDK (ou votre intégration) envoie un <code>uid</code> avec

@@ -30,7 +30,8 @@ export async function GET(request: Request) {
 
   const llmParam = searchParams.get("llm");
   let llm: LLMTarget | undefined;
-  if (llmParam !== null) {
+  // Chaîne vide = paramètre absent (pas d'erreur)
+  if (llmParam !== null && llmParam.trim() !== "") {
     const normalized = llmParam.trim().toLowerCase();
     if (!(ALL_LLMS as string[]).includes(normalized)) {
       return NextResponse.json(

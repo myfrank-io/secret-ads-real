@@ -234,8 +234,10 @@ export default function EarnPage() {
       creditedRef.current.add(key);
       credit("click", `Clic — ${ad.advertiser}`, PAYOUTS.click, { clicks: 1 });
       track(ad.campaignId, "click");
-      window.open(ad.url, "_blank", "noopener,noreferrer");
     }
+    // La navigation reste possible à chaque clic (popup bloquée au premier,
+    // re-clic…) ; seul le crédit est dédupliqué
+    window.open(ad.url, "_blank", "noopener,noreferrer");
     setSession((prev) =>
       prev && prev.id === cur.id ? { ...prev, clicked: true } : prev
     );

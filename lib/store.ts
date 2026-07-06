@@ -135,10 +135,12 @@ function generateDaily(campaign: Campaign, seed: number): DailyMetric[] {
     const noise = 0.8 + 0.4 * rand();
     const impressions = Math.round((2000 + rand() * 6000) * scale * noise);
     const ctr = 0.025 + rand() * 0.03;
-    // La dépense ne dépasse jamais le budget : on borne les clics facturables
+    // La dépense seedée s'arrête à 90 % du budget : les campagnes de démo
+    // gardent de la marge et ne naissent pas épuisées (fin au premier clic)
+    const spendCap = campaign.budget * 0.9;
     const affordable = Math.max(
       0,
-      Math.floor((campaign.budget - spentSoFar) / campaign.cpc)
+      Math.floor((spendCap - spentSoFar) / campaign.cpc)
     );
     const clicks = Math.min(Math.round(impressions * ctr), affordable);
     const cvr = 0.04 + rand() * 0.06;

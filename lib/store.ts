@@ -1,7 +1,9 @@
 import {
+  AVG_ORDER_VALUE,
   Campaign,
   CampaignWithMetrics,
   DailyMetric,
+  LIMITS,
   LLMTarget,
   ServedAd,
   Topic,
@@ -20,9 +22,11 @@ function mulberry32(seed: number) {
   };
 }
 
+// Frontière de journée en UTC partout (labels et tracking cohérents,
+// insensible au fuseau du serveur et aux changements d'heure)
 function dateNDaysAgo(n: number): string {
   const d = new Date();
-  d.setDate(d.getDate() - n);
+  d.setUTCDate(d.getUTCDate() - n);
   return d.toISOString().slice(0, 10);
 }
 
@@ -100,7 +104,7 @@ const SEED_CAMPAIGNS: Campaign[] = [
     status: "paused",
     budget: 6000,
     cpc: 0.45,
-    headline: "Équipez votre premier trail à moins de 120 €",
+    headline: "Équipez-vous pour votre premier trail à moins de 120 €",
     body: "Chaussures, sac, bâtons : le pack complet testé en montagne.",
     cta: "Découvrir le pack",
     url: "https://www.decathlon.fr",
@@ -111,18 +115,36 @@ const SEED_CAMPAIGNS: Campaign[] = [
 
 const DAYS_OF_HISTORY = 30;
 
+// Couleurs attribuées aux nouvelles campagnes (palette validée surface sombre)
+const CAMPAIGN_COLORS = [
+  "#3987e5",
+  "#199e70",
+  "#c98500",
+  "#9085e9",
+  "#e66767",
+  "#d55181",
+  "#d95926",
+];
+
 function generateDaily(campaign: Campaign, seed: number): DailyMetric[] {
   const rand = mulberry32(seed);
   const daily: DailyMetric[] = [];
   const scale = campaign.budget / 10000; // les gros budgets font plus de volume
+  let spentSoFar = 0;
   for (let i = DAYS_OF_HISTORY - 1; i >= 0; i--) {
-    const weekBoost = 0.8 + 0.4 * rand();
-    const impressions = Math.round((2000 + rand() * 6000) * scale * weekBoost);
+    const noise = 0.8 + 0.4 * rand();
+    const impressions = Math.round((2000 + rand() * 6000) * scale * noise);
     const ctr = 0.025 + rand() * 0.03;
-    const clicks = Math.round(impressions * ctr);
+    // La dépense ne dépasse jamais le budget : on borne les clics facturables
+    const affordable = Math.max(
+      0,
+      Math.floor((campaign.budget - spentSoFar) / campaign.cpc)
+    );
+    const clicks = Math.min(Math.round(impressions * ctr), affordable);
     const cvr = 0.04 + rand() * 0.06;
     const conversions = Math.round(clicks * cvr);
     const spend = Math.round(clicks * campaign.cpc * 100) / 100;
+    spentSoFar += spend;
     const aov = 45 + rand() * 120; // panier moyen
     const revenue = Math.round(conversions * aov * 100) / 100;
     daily.push({
@@ -140,17 +162,24 @@ function generateDaily(campaign: Campaign, seed: number): DailyMetric[] {
 interface Store {
   campaigns: Campaign[];
   metrics: Map<string, DailyMetric[]>;
+  seq: number;
 }
 
 function createStore(): Store {
   const metrics = new Map<string, DailyMetric[]>();
-  SEED_CAMPAIGNS.forEach((c, idx) => {
+  // Copies profondes : les seeds du module ne sont jamais mutés
+  const campaigns = SEED_CAMPAIGNS.map((c) => ({
+    ...c,
+    targets: [...c.targets],
+  }));
+  campaigns.forEach((c, idx) => {
     metrics.set(c.id, generateDaily(c, 1000 + idx * 97));
   });
-  return { campaigns: [...SEED_CAMPAIGNS], metrics };
+  return { campaigns, metrics, seq: 0 };
 }
 
-// Persiste entre les requêtes d'une même instance (dev + serverless chaude)
+// Persiste entre les requêtes d'une même instance (dev + serverless chaude).
+// Limite assumée du MVP : chaque instance serverless a son propre store.
 const globalStore = globalThis as unknown as { __secretAdsStore?: Store };
 
 export function getStore(): Store {
@@ -184,7 +213,7 @@ export function getCampaignsWithMetrics(): CampaignWithMetrics[] {
   const store = getStore();
   return store.campaigns.map((c) => {
     const daily = store.metrics.get(c.id) ?? [];
-    return { ...c, daily, totals: computeTotals(daily) };
+    return { ...c, daily: daily.map((d) => ({ ...d })), totals: computeTotals(daily) };
   });
 }
 
@@ -199,14 +228,20 @@ export function addCampaign(input: {
   body: string;
   cta: string;
   url: string;
-}): Campaign {
+}): Campaign | null {
   const store = getStore();
+  if (store.campaigns.length >= LIMITS.maxCampaigns) {
+    return null;
+  }
+  store.seq += 1;
+  // Les champs serveur sont posés APRÈS le spread : un input hostile ne peut
+  // pas fournir id/status/createdAt
   const campaign: Campaign = {
-    id: `cmp_${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`,
-    status: "active",
-    color: "#3987e5",
-    createdAt: new Date().toISOString().slice(0, 10),
     ...input,
+    id: `cmp_${Date.now().toString(36)}_${store.seq}`,
+    status: "active",
+    color: CAMPAIGN_COLORS[store.seq % CAMPAIGN_COLORS.length],
+    createdAt: dateNDaysAgo(0),
   };
   store.campaigns.unshift(campaign);
   // Une nouvelle campagne démarre à zéro : une seule journée vide (aujourd'hui)
@@ -234,22 +269,27 @@ export function setCampaignStatus(
   return campaign;
 }
 
+/**
+ * Sélectionne une pub pour la barre de chargement.
+ * - Ciblage LLM strict : une campagne qui ne cible pas le LLM hôte n'est
+ *   jamais servie (contrat annonceur).
+ * - Ciblage topics au mieux : on privilégie les centres d'intérêt de
+ *   l'utilisateur, avec repli sur le pool restant pour garder un bon fill rate.
+ */
 export function serveAd(params: {
-  llm?: string;
+  llm?: LLMTarget;
   topics?: Topic[];
 }): ServedAd | null {
   const store = getStore();
   let pool = store.campaigns.filter((c) => c.status === "active");
   if (params.llm) {
-    const llm = params.llm as LLMTarget;
-    const byLlm = pool.filter((c) => c.targets.includes(llm));
-    if (byLlm.length > 0) pool = byLlm;
+    pool = pool.filter((c) => c.targets.includes(params.llm as LLMTarget));
   }
+  if (pool.length === 0) return null;
   if (params.topics && params.topics.length > 0) {
     const byTopic = pool.filter((c) => params.topics!.includes(c.topic));
     if (byTopic.length > 0) pool = byTopic;
   }
-  if (pool.length === 0) return null;
   const campaign = pool[Math.floor(Math.random() * pool.length)];
   return {
     id: `ad_${campaign.id}_${Date.now().toString(36)}`,
@@ -264,12 +304,18 @@ export function serveAd(params: {
   };
 }
 
-export function trackEvent(campaignId: string, event: TrackEvent): boolean {
+export type TrackResult =
+  | { ok: true }
+  | { ok: false; reason: "not_found" | "inactive" };
+
+export function trackEvent(campaignId: string, event: TrackEvent): TrackResult {
   const store = getStore();
   const campaign = store.campaigns.find((c) => c.id === campaignId);
-  if (!campaign) return false;
+  if (!campaign) return { ok: false, reason: "not_found" };
+  // Une campagne en pause ou terminée ne peut plus être facturée
+  if (campaign.status !== "active") return { ok: false, reason: "inactive" };
   const daily = store.metrics.get(campaignId);
-  if (!daily || daily.length === 0) return false;
+  if (!daily || daily.length === 0) return { ok: false, reason: "not_found" };
   const today = dateNDaysAgo(0);
   let entry = daily[daily.length - 1];
   if (entry.date !== today) {
@@ -285,12 +331,18 @@ export function trackEvent(campaignId: string, event: TrackEvent): boolean {
   }
   if (event === "impression") entry.impressions += 1;
   if (event === "click") {
+    const totalSpend = daily.reduce((s, d) => s + d.spend, 0);
+    if (totalSpend + campaign.cpc > campaign.budget) {
+      // Budget épuisé : la campagne s'arrête d'elle-même
+      campaign.status = "ended";
+      return { ok: false, reason: "inactive" };
+    }
     entry.clicks += 1;
     entry.spend = Math.round((entry.spend + campaign.cpc) * 100) / 100;
   }
   if (event === "conversion") {
     entry.conversions += 1;
-    entry.revenue = Math.round((entry.revenue + 80) * 100) / 100;
+    entry.revenue = Math.round((entry.revenue + AVG_ORDER_VALUE) * 100) / 100;
   }
-  return true;
+  return { ok: true };
 }

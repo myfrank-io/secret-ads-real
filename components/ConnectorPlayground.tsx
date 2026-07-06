@@ -34,11 +34,20 @@ export default function ConnectorPlayground() {
       const params = new URLSearchParams({ llm });
       if (topics.length > 0) params.set("topics", topics.join(","));
       const res = await fetch(`/api/ads?${params.toString()}`);
-      const json = (await res.json()) as { ad: ServedAd | null };
+      const json = (await res.json()) as {
+        ad: ServedAd | null;
+        error?: string;
+      };
       setAd(json.ad ?? null);
       setRaw(JSON.stringify(json, null, 2));
       setRunId((r) => r + 1);
-      if (!res.ok) setError("Aucune campagne ne correspond à ce ciblage.");
+      if (!res.ok) {
+        setError(json.error ?? "Requête invalide.");
+      } else if (!json.ad) {
+        setError(
+          "Aucune campagne active ne cible ce LLM — le ciblage LLM est strict."
+        );
+      }
     } catch {
       setError("Erreur réseau.");
     }

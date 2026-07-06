@@ -113,3 +113,19 @@ export const PAYOUTS = {
 } as const;
 
 export const CASHOUT_THRESHOLD = 10;
+
+// Valeur créditée côté annonceur lors d'une conversion trackée
+export const AVG_ORDER_VALUE = 80;
+
+// Bornes de validation des campagnes (anti-abus, l'API est ouverte en MVP)
+export const LIMITS = {
+  name: 80,
+  advertiser: 60,
+  headline: 120,
+  body: 300,
+  cta: 40,
+  url: 2048,
+  maxBudget: 1_000_000,
+  maxCpc: 100,
+  maxCampaigns: 200,
+} as const;

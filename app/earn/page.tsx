@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LoadingBarAd from "@/components/LoadingBarAd";
 import {
   ALL_LLMS,
@@ -17,6 +17,7 @@ import {
 const STORAGE_KEY = "secret-ads-earn-v1";
 
 interface EarnEvent {
+  id: string;
   ts: number;
   type: "impression" | "click" | "conversion" | "cashout";
   label: string;
@@ -47,6 +48,15 @@ function loadState(): EarnState {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY_STATE;
     const parsed = JSON.parse(raw) as Partial<EarnState>;
+    const history = Array.isArray(parsed.history)
+      ? (parsed.history as Partial<EarnEvent>[]).map((h, i) => ({
+          id: typeof h.id === "string" ? h.id : `legacy-${i}-${h.ts ?? i}`,
+          ts: typeof h.ts === "number" ? h.ts : 0,
+          type: (h.type ?? "impression") as EarnEvent["type"],
+          label: typeof h.label === "string" ? h.label : "",
+          amount: typeof h.amount === "number" ? h.amount : 0,
+        }))
+      : [];
     return {
       topics: Array.isArray(parsed.topics)
         ? (parsed.topics.filter((t) =>
@@ -57,9 +67,7 @@ function loadState(): EarnState {
       lifetime: typeof parsed.lifetime === "number" ? parsed.lifetime : 0,
       views: typeof parsed.views === "number" ? parsed.views : 0,
       clicks: typeof parsed.clicks === "number" ? parsed.clicks : 0,
-      history: Array.isArray(parsed.history)
-        ? (parsed.history as EarnEvent[])
-        : [],
+      history,
     };
   } catch {
     return EMPTY_STATE;
@@ -73,7 +81,7 @@ function eur(v: number): string {
 const PROMPTS = [
   "Explique-moi la différence entre un ETF et une action",
   "Rédige un mail de relance poli pour un client",
-  "Idées de week-end pas cher à 2h de Paris ?",
+  "Idées de week-end pas chers à 2h de Paris ?",
   "Corrige et améliore ce paragraphe de mon mémoire",
   "Fais-moi un programme de course pour un 10 km",
   "Recette rapide avec courgettes et feta ?",
@@ -94,12 +102,23 @@ interface Session {
 export default function EarnPage() {
   const [mounted, setMounted] = useState(false);
   const [state, setState] = useState<EarnState>(EMPTY_STATE);
+  const [draftTopics, setDraftTopics] = useState<Topic[]>([]);
   const [editingTopics, setEditingTopics] = useState(false);
   const [llm, setLlm] = useState<LLMTarget>("claude");
   const [session, setSession] = useState<Session | null>(null);
   const [starting, setStarting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showCashout, setShowCashout] = useState(false);
+
+  // Miroir de la session + registre de déduplication : les crédits sont
+  // déclenchés HORS des updaters React (qui doivent rester purs)
+  const sessionRef = useRef<Session | null>(null);
+  const creditedRef = useRef<Set<string>>(new Set());
+  const seqRef = useRef(0);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     setState(loadState());
@@ -121,7 +140,7 @@ export default function EarnPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const onboarding = mounted && state.topics.length === 0 && !editingTopics;
+  const onboarding = mounted && state.topics.length === 0;
 
   const credit = (
     type: EarnEvent["type"],
@@ -129,6 +148,15 @@ export default function EarnPage() {
     amount: number,
     extra?: Partial<Pick<EarnState, "views" | "clicks">>
   ) => {
+    // L'événement est construit ici (une seule fois) : l'updater reste pur
+    seqRef.current += 1;
+    const event: EarnEvent = {
+      id: `${Date.now().toString(36)}-${seqRef.current}`,
+      ts: Date.now(),
+      type,
+      label,
+      amount,
+    };
     setState((prev) => ({
       ...prev,
       balance: Math.round((prev.balance + amount) * 100) / 100,
@@ -138,14 +166,14 @@ export default function EarnPage() {
           : prev.lifetime,
       views: prev.views + (extra?.views ?? 0),
       clicks: prev.clicks + (extra?.clicks ?? 0),
-      history: [{ ts: Date.now(), type, label, amount }, ...prev.history].slice(
-        0,
-        50
-      ),
+      history: [event, ...prev.history].slice(0, 50),
     }));
   };
 
-  const track = (campaignId: string, event: "impression" | "click" | "conversion") => {
+  const track = (
+    campaignId: string,
+    event: "impression" | "click" | "conversion"
+  ) => {
     fetch("/api/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -163,8 +191,9 @@ export default function EarnPage() {
       const res = await fetch(`/api/ads?${params.toString()}`);
       const json = (await res.json()) as { ad: ServedAd | null };
       const ad = res.ok ? json.ad : null;
+      seqRef.current += 1;
       setSession({
-        id: Date.now(),
+        id: seqRef.current,
         llm,
         prompt: PROMPTS[Math.floor(Math.random() * PROMPTS.length)],
         ad,
@@ -179,56 +208,85 @@ export default function EarnPage() {
   };
 
   const onSessionComplete = () => {
-    setSession((prev) => {
-      if (!prev || prev.done) return prev;
-      if (prev.ad) {
-        credit(
-          "impression",
-          `Pub vue — ${prev.ad.advertiser} (${LLM_LABELS[prev.llm]})`,
-          PAYOUTS.impression,
-          { views: 1 }
-        );
-        track(prev.ad.campaignId, "impression");
-      }
-      return { ...prev, done: true };
-    });
+    const cur = sessionRef.current;
+    if (!cur) return;
+    const key = `${cur.id}:impression`;
+    if (cur.ad && !creditedRef.current.has(key)) {
+      creditedRef.current.add(key);
+      credit(
+        "impression",
+        `Pub vue — ${cur.ad.advertiser} (${LLM_LABELS[cur.llm]})`,
+        PAYOUTS.impression,
+        { views: 1 }
+      );
+      track(cur.ad.campaignId, "impression");
+    }
+    setSession((prev) =>
+      prev && prev.id === cur.id ? { ...prev, done: true } : prev
+    );
   };
 
   const onAdClick = (ad: ServedAd) => {
-    setSession((prev) => {
-      if (!prev || prev.clicked) return prev;
+    const cur = sessionRef.current;
+    if (!cur) return;
+    const key = `${cur.id}:click`;
+    if (!creditedRef.current.has(key)) {
+      creditedRef.current.add(key);
       credit("click", `Clic — ${ad.advertiser}`, PAYOUTS.click, { clicks: 1 });
       track(ad.campaignId, "click");
-      return { ...prev, clicked: true };
-    });
+      window.open(ad.url, "_blank", "noopener,noreferrer");
+    }
+    setSession((prev) =>
+      prev && prev.id === cur.id ? { ...prev, clicked: true } : prev
+    );
   };
 
   const onConvert = () => {
-    setSession((prev) => {
-      if (!prev || !prev.ad || prev.converted) return prev;
+    const cur = sessionRef.current;
+    if (!cur || !cur.ad) return;
+    const key = `${cur.id}:conversion`;
+    if (!creditedRef.current.has(key)) {
+      creditedRef.current.add(key);
       credit(
         "conversion",
-        `Achat chez ${prev.ad.advertiser} — cashback`,
+        `Achat chez ${cur.ad.advertiser} — cashback`,
         PAYOUTS.conversionCashback
       );
-      track(prev.ad.campaignId, "conversion");
-      return { ...prev, converted: true };
-    });
+      track(cur.ad.campaignId, "conversion");
+    }
+    setSession((prev) =>
+      prev && prev.id === cur.id ? { ...prev, converted: true } : prev
+    );
   };
 
   const requestCashout = () => {
-    credit("cashout", "Retrait vers votre compte", -state.balance);
+    // Montant affiché dans la modale = montant retiré ; un éventuel gain
+    // crédité entre-temps reste sur le solde
+    const amount = state.balance;
+    if (amount <= 0) {
+      setShowCashout(false);
+      return;
+    }
+    credit("cashout", "Retrait vers votre compte", -amount);
     setShowCashout(false);
     setToast("Demande de virement envoyée — sous 3 jours ouvrés.");
   };
 
-  const toggleTopic = (t: Topic) => {
-    setState((prev) => ({
-      ...prev,
-      topics: prev.topics.includes(t)
-        ? prev.topics.filter((x) => x !== t)
-        : [...prev.topics, t],
-    }));
+  const toggleDraftTopic = (t: Topic) => {
+    setDraftTopics((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+    );
+  };
+
+  const openTopicsEditor = () => {
+    setDraftTopics(state.topics);
+    setEditingTopics(true);
+  };
+
+  const commitTopics = () => {
+    if (draftTopics.length === 0) return;
+    setState((prev) => ({ ...prev, topics: draftTopics }));
+    setEditingTopics(false);
   };
 
   const cashoutPct = useMemo(
@@ -263,16 +321,15 @@ export default function EarnPage() {
             Choisissez vos centres d&apos;intérêt (min. 1)
           </div>
           <p className="muted small" style={{ marginBottom: "1rem" }}>
-            Vous ne verrez que des pubs qui vous correspondent — et elles
-            paient mieux.
+            Vous verrez en priorité des pubs qui vous correspondent.
           </p>
           <div className="chip-row" style={{ marginBottom: "1.25rem" }}>
             {ALL_TOPICS.map((t) => (
               <button
                 key={t}
                 type="button"
-                className={`chip ${state.topics.includes(t) ? "selected" : ""}`}
-                onClick={() => toggleTopic(t)}
+                className={`chip ${draftTopics.includes(t) ? "selected" : ""}`}
+                onClick={() => toggleDraftTopic(t)}
               >
                 {TOPIC_LABELS[t]}
               </button>
@@ -280,8 +337,8 @@ export default function EarnPage() {
           </div>
           <button
             className="btn btn-primary"
-            disabled={state.topics.length === 0}
-            onClick={() => setEditingTopics(false)}
+            disabled={draftTopics.length === 0}
+            onClick={commitTopics}
           >
             Commencer à gagner
           </button>
@@ -300,7 +357,7 @@ export default function EarnPage() {
             clic · {eur(PAYOUTS.conversionCashback)} de cashback par achat.
           </p>
         </div>
-        <button className="btn" onClick={() => setEditingTopics(true)}>
+        <button className="btn" onClick={openTopicsEditor}>
           Mes centres d&apos;intérêt ({state.topics.length})
         </button>
       </div>
@@ -447,7 +504,7 @@ export default function EarnPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: "0.55rem" }}>
                 {state.history.slice(0, 10).map((h) => (
                   <div
-                    key={`${h.ts}-${h.type}-${h.amount}`}
+                    key={h.id}
                     style={{
                       display: "flex",
                       justifyContent: "space-between",
@@ -490,20 +547,25 @@ export default function EarnPage() {
                 <button
                   key={t}
                   type="button"
-                  className={`chip ${state.topics.includes(t) ? "selected" : ""}`}
-                  onClick={() => toggleTopic(t)}
+                  className={`chip ${draftTopics.includes(t) ? "selected" : ""}`}
+                  onClick={() => toggleDraftTopic(t)}
                 >
                   {TOPIC_LABELS[t]}
                 </button>
               ))}
             </div>
-            <button
-              className="btn btn-primary"
-              disabled={state.topics.length === 0}
-              onClick={() => setEditingTopics(false)}
-            >
-              Enregistrer
-            </button>
+            <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end" }}>
+              <button className="btn" onClick={() => setEditingTopics(false)}>
+                Annuler
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={draftTopics.length === 0}
+                onClick={commitTopics}
+              >
+                Enregistrer
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -519,7 +581,7 @@ export default function EarnPage() {
             <h2>Retirer {eur(state.balance)}</h2>
             <p className="muted small" style={{ marginBottom: "1rem" }}>
               MVP : le virement est simulé. En production, connectez Stripe
-              Connect ou un IBAN.
+              Connect ou renseignez un IBAN.
             </p>
             <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end" }}>
               <button className="btn" onClick={() => setShowCashout(false)}>

@@ -35,11 +35,17 @@ export async function POST(request: Request) {
   }
 
   const { campaignId, event } = (body ?? {}) as {
-    campaignId?: string;
-    event?: string;
+    campaignId?: unknown;
+    event?: unknown;
   };
 
-  if (!campaignId || !event || !VALID_EVENTS.includes(event as TrackEvent)) {
+  if (
+    typeof campaignId !== "string" ||
+    campaignId.length === 0 ||
+    campaignId.length > 100 ||
+    typeof event !== "string" ||
+    !VALID_EVENTS.includes(event as TrackEvent)
+  ) {
     return NextResponse.json(
       {
         ok: false,
@@ -50,11 +56,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const ok = trackEvent(campaignId, event as TrackEvent);
-  if (!ok) {
+  const result = trackEvent(campaignId, event as TrackEvent);
+  if (!result.ok) {
+    if (result.reason === "not_found") {
+      return NextResponse.json(
+        { ok: false, error: "Campagne introuvable." },
+        { status: 404, headers: CORS_HEADERS }
+      );
+    }
     return NextResponse.json(
-      { ok: false, error: "Campagne introuvable." },
-      { status: 404, headers: CORS_HEADERS }
+      { ok: false, error: "Campagne inactive ou budget épuisé." },
+      { status: 409, headers: CORS_HEADERS }
     );
   }
 

@@ -156,18 +156,26 @@ export default function BarChart({ title, data, color, formatValue }: Props) {
           )}
         </svg>
 
-        {hover !== null && data[hover] && (
-          <div
-            className="chart-tooltip"
-            style={{
-              left: `${((hover + 0.5) / n) * 100}%`,
-              top: `${((PLOT_BOTTOM - (data[hover].value / max) * plotH) / VB_H) * 100}%`,
-            }}
-          >
-            <span className="t-date">{frDate(data[hover].date)} · </span>
-            <span className="t-value">{formatValue(data[hover].value)}</span>
-          </div>
-        )}
+        {hover !== null && data[hover] && (() => {
+          const barTopY = PLOT_BOTTOM - (data[hover].value / max) * plotH;
+          // Barres hautes : tooltip sous le sommet pour ne pas déborder du card
+          const flip = barTopY < 46;
+          return (
+            <div
+              className="chart-tooltip"
+              style={{
+                left: `${Math.min(88, Math.max(12, ((hover + 0.5) / n) * 100))}%`,
+                top: `${((flip ? barTopY + 30 : barTopY) / VB_H) * 100}%`,
+                transform: flip
+                  ? "translate(-50%, 0)"
+                  : "translate(-50%, calc(-100% - 10px))",
+              }}
+            >
+              <span className="t-date">{frDate(data[hover].date)} · </span>
+              <span className="t-value">{formatValue(data[hover].value)}</span>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

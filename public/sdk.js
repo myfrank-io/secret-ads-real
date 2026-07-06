@@ -29,6 +29,8 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ campaignId: campaignId, event: event }),
         keepalive: true,
+      }).catch(function () {
+        /* best effort */
       });
     } catch (e) {
       /* best effort */
@@ -48,8 +50,8 @@
     var logo = document.createElement("div");
     logo.style.cssText =
       "width:34px;height:34px;border-radius:9px;flex-shrink:0;color:#fff;" +
-      "display:flex;align-items:center;justify-content:center;font-weight:700;" +
-      "background:" + (ad.color || "#5b4be0") + ";";
+      "display:flex;align-items:center;justify-content:center;font-weight:700;";
+    logo.style.background = ad.color || "#5b4be0";
     logo.textContent = (ad.advertiser || "?").charAt(0);
 
     var content = document.createElement("div");
@@ -86,8 +88,6 @@
     wrap.appendChild(logo);
     wrap.appendChild(content);
     container.appendChild(wrap);
-
-    track(ad.campaignId, "impression");
   }
 
   function init() {
@@ -106,6 +106,8 @@
         containers.forEach(function (c) {
           render(c, json.ad);
         });
+        // Une seule pub servie = une seule impression facturée
+        track(json.ad.campaignId, "impression");
       })
       .catch(function () {
         /* pas de pub disponible : le conteneur reste vide */

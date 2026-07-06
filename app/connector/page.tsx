@@ -64,7 +64,11 @@ export default function ConnectorPage() {
           <code>GET /api/ads</code> — paramètres : <code>llm</code>{" "}
           (claude | chatgpt | gemini | mistral | perplexity) et{" "}
           <code>topics</code> (liste de centres d&apos;intérêt séparés par des
-          virgules). La régie choisit la campagne active la plus pertinente.
+          virgules). Le ciblage LLM est strict : seule une campagne qui cible
+          ce LLM peut être servie ; les topics sont préférentiels. Sans
+          campagne correspondante, la réponse est un 200 avec{" "}
+          <code>ad: null</code> (no fill) ; un <code>llm</code> inconnu renvoie
+          un 400.
         </p>
         <pre className="codeblock">{CURL_EXAMPLE}</pre>
         <div className="spacer" />
@@ -78,7 +82,8 @@ export default function ConnectorPage() {
           <code>impression</code> quand la pub s&apos;affiche,{" "}
           <code>click</code> quand l&apos;utilisateur clique,{" "}
           <code>conversion</code> à l&apos;achat. La réponse contient le
-          montant crédité à l&apos;utilisateur.
+          montant crédité à l&apos;utilisateur. Une campagne en pause ou dont
+          le budget est épuisé renvoie un 409 et n&apos;est plus facturée.
         </p>
         <pre className="codeblock">{TRACK_EXAMPLE}</pre>
       </section>

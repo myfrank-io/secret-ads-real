@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { serveAd } from "@/lib/store";
-import { ALL_TOPICS, PAYOUTS, Topic } from "@/lib/types";
+import { ALL_LLMS, ALL_TOPICS, LLMTarget, PAYOUTS, Topic } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -20,28 +20,41 @@ export async function OPTIONS() {
  * GET /api/ads?llm=claude&topics=tech,voyage
  * Renvoie une publicité adaptée au LLM hôte et aux centres d'intérêt
  * de l'utilisateur, à afficher dans la barre de chargement.
+ *
+ * Contrat : le ciblage LLM est strict (une campagne qui ne cible pas ce LLM
+ * n'est jamais servie) ; les topics sont un ciblage préférentiel. Un "no
+ * fill" est une réponse normale : 200 avec { ad: null }.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const llm = searchParams.get("llm") ?? undefined;
+
+  const llmParam = searchParams.get("llm");
+  let llm: LLMTarget | undefined;
+  if (llmParam !== null) {
+    const normalized = llmParam.trim().toLowerCase();
+    if (!(ALL_LLMS as string[]).includes(normalized)) {
+      return NextResponse.json(
+        {
+          ad: null,
+          error: `Paramètre llm invalide. Valeurs acceptées : ${ALL_LLMS.join(", ")}.`,
+        },
+        { status: 400, headers: CORS_HEADERS }
+      );
+    }
+    llm = normalized as LLMTarget;
+  }
+
   const topicsParam = searchParams.get("topics");
   const topics = topicsParam
     ? (topicsParam
         .split(",")
-        .map((t) => t.trim())
+        .map((t) => t.trim().toLowerCase())
         .filter((t): t is Topic =>
           (ALL_TOPICS as string[]).includes(t)
         ) as Topic[])
     : undefined;
 
   const ad = serveAd({ llm, topics });
-
-  if (!ad) {
-    return NextResponse.json(
-      { ad: null, error: "Aucune campagne active ne correspond." },
-      { status: 404, headers: CORS_HEADERS }
-    );
-  }
 
   return NextResponse.json(
     {

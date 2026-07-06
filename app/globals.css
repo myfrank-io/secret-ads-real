@@ -336,7 +336,7 @@ table.data {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.88rem;
-  min-width: 900px;
+  min-width: 1050px;
 }
 
 table.data th {

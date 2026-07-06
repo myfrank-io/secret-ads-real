@@ -13,10 +13,12 @@ import {
 } from "@/lib/types";
 
 function eur(v: number): string {
+  const rounded = v >= 1000;
   return v.toLocaleString("fr-FR", {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: v >= 1000 ? 0 : 2,
+    minimumFractionDigits: rounded ? 0 : 2,
+    maximumFractionDigits: rounded ? 0 : 2,
   });
 }
 
@@ -140,7 +142,10 @@ export default function AdvertiserPage() {
           <h1>Espace annonceurs</h1>
           <p className="sub">
             Vos campagnes diffusées dans les barres de chargement de{" "}
-            {ALL_LLMS.map((l) => LLM_LABELS[l]).join(", ")} — métriques des 30
+            {ALL_LLMS.slice(0, -1)
+              .map((l) => LLM_LABELS[l])
+              .join(", ")}{" "}
+            et {LLM_LABELS[ALL_LLMS[ALL_LLMS.length - 1]]} — métriques des 30
             derniers jours.
           </p>
         </div>
@@ -225,7 +230,9 @@ export default function AdvertiserPage() {
                     <th className="num">Impr.</th>
                     <th className="num">Clics</th>
                     <th className="num">CTR</th>
+                    <th className="num">CPC réel</th>
                     <th className="num">Conv.</th>
+                    <th className="num">CVR</th>
                     <th className="num">CPA</th>
                     <th className="num">ROAS</th>
                     <th></th>
@@ -274,7 +281,13 @@ export default function AdvertiserPage() {
                       <td className="num">{num(c.totals.impressions)}</td>
                       <td className="num">{num(c.totals.clicks)}</td>
                       <td className="num">{pct(c.totals.ctr)}</td>
+                      <td className="num">
+                        {c.totals.clicks > 0
+                          ? eur(c.totals.spend / c.totals.clicks)
+                          : "—"}
+                      </td>
                       <td className="num">{num(c.totals.conversions)}</td>
+                      <td className="num">{pct(c.totals.cvr)}</td>
                       <td className="num">
                         {c.totals.conversions > 0 ? eur(c.totals.cpa) : "—"}
                       </td>

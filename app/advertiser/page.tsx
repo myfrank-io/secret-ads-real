@@ -141,11 +141,12 @@ export default function AdvertiserPage() {
         <div>
           <h1>Espace annonceurs</h1>
           <p className="sub">
-            Vos campagnes diffusées dans les barres de chargement de{" "}
-            {ALL_LLMS.slice(0, -1)
+            Touchez les développeurs au moment exact où ils fixent
+            l&apos;écran : pendant que leur IA génère. Emplacement 100 %
+            visible, hors de portée des adblockers ({ALL_LLMS.slice(0, -1)
               .map((l) => LLM_LABELS[l])
               .join(", ")}{" "}
-            et {LLM_LABELS[ALL_LLMS[ALL_LLMS.length - 1]]} — métriques des 30
+            et {LLM_LABELS[ALL_LLMS[ALL_LLMS.length - 1]]}) — métriques des 30
             derniers jours.
           </p>
         </div>

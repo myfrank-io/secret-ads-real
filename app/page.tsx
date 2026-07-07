@@ -8,24 +8,25 @@ export default function Home() {
         MVP — Permile
       </span>
       <h1>
-        La régie publicitaire
+        Votre IA réfléchit.
         <br />
-        des barres de chargement IA
+        Vous encaissez.
       </h1>
       <p>
-        Les annonceurs diffusent leurs publicités pendant que Claude, ChatGPT
-        ou Gemini génèrent leurs réponses. Les utilisateurs qui les regardent
-        sont payés à la vue, au clic et à l&apos;achat.
+        Une ligne sponsorisée s&apos;affiche pendant que Claude Code, Cursor
+        ou ChatGPT génèrent — et vous êtes payé à chaque impression. Les
+        annonceurs devtools touchent les développeurs au seul moment où ils
+        regardent vraiment l&apos;écran sans rien faire.
       </p>
       <div className="home-ctas">
-        <Link href="/advertiser" className="btn btn-primary">
+        <Link href="/dev" className="btn btn-primary">
+          Je code avec l&apos;IA — installer
+        </Link>
+        <Link href="/advertiser" className="btn">
           Je suis annonceur
         </Link>
-        <Link href="/earn" className="btn">
-          Je veux être payé pour voir des pubs
-        </Link>
-        <Link href="/connector" className="btn">
-          Intégrer le connecteur
+        <Link href="/demo" className="btn">
+          Voir la démo
         </Link>
       </div>
     </main>

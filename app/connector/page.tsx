@@ -106,6 +106,24 @@ export default function ConnectorPage() {
       </section>
 
       <section className="section">
+        <h2>2 bis. Format « status line » (IDE &amp; terminaux)</h2>
+        <p className="muted small" style={{ marginBottom: "0.8rem" }}>
+          Pour Claude Code, Cursor et tout outil en ligne de commande :{" "}
+          <code>GET /api/statusline?llm=claude-code&amp;uid=usr_xxx</code>{" "}
+          renvoie <strong>une ligne de texte brut</strong> prête à afficher
+          dans une barre de statut, et crédite l&apos;impression sur le
+          portefeuille du <code>uid</code>. Installation clé en main pour
+          Claude Code sur la page{" "}
+          <a href="/dev" style={{ color: "var(--accent)" }}>
+            /dev
+          </a>
+          .
+        </p>
+        <pre className="codeblock">{`curl "https://VOTRE-DOMAINE/api/statusline?llm=claude-code&uid=usr_xxx"
+# → ▌ Sentry — Le code généré par l'IA casse aussi. Sachez-le avant vos users · sentry.io`}</pre>
+      </section>
+
+      <section className="section">
         <h2>3 bis. Extension navigateur (côté utilisateur)</h2>
         <p className="muted small" style={{ marginBottom: "0.8rem" }}>
           Pour les LLM fermés (claude.ai, chatgpt.com, gemini.google.com,

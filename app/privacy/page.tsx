@@ -57,6 +57,33 @@ export default function PrivacyPage() {
       </section>
 
       <section className="section">
+        <h2>Extension Chrome « Permile — Connecteur LLM »</h2>
+        <p className="muted">
+          L&apos;extension a une <strong>finalité unique</strong> : afficher
+          une publicité sponsorisée pendant que les assistants IA génèrent
+          leurs réponses, et créditer les gains correspondants sur le
+          portefeuille Permile de l&apos;utilisateur. La seule catégorie de
+          données collectée est l&apos;<strong>activité de
+          l&apos;utilisateur</strong> relative aux publicités Permile
+          (affichage d&apos;une publicité, clic sur une publicité), associée à
+          un identifiant pseudonyme. L&apos;autorisation <code>storage</code>{" "}
+          sert uniquement à mémoriser cet identifiant ;
+          l&apos;accès réseau sert uniquement à récupérer les publicités et à
+          enregistrer ces événements auprès de l&apos;API Permile.
+        </p>
+        <p className="muted">
+          Conformément aux exigences « Limited Use » du Chrome Web Store :
+          nous ne vendons ni ne transférons les données des utilisateurs à
+          des tiers en dehors des cas d&apos;utilisation approuvés ; nous ne
+          les utilisons ni ne les transférons à des fins sans rapport avec la
+          finalité unique de l&apos;extension ; nous ne les utilisons jamais
+          pour évaluer la solvabilité ou à des fins de prêt. Les annonceurs
+          ne reçoivent que des statistiques agrégées de campagne
+          (impressions, clics, conversions) — jamais de données individuelles.
+        </p>
+      </section>
+
+      <section className="section">
         <h2>Vos droits</h2>
         <p className="muted">
           Vous pouvez supprimer votre identifiant et vos données locales à

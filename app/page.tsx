@@ -5,7 +5,7 @@ export default function Home() {
     <main className="home">
       <span className="badge">
         <span className="dot" style={{ background: "var(--accent)" }} />
-        MVP — Secret Ads
+        MVP — Permile
       </span>
       <h1>
         La régie publicitaire

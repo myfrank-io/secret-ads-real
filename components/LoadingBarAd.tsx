@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Reproduit l'interface d'un LLM pendant la génération : le prompt de
- * l'utilisateur, l'emplacement publicitaire Secret Ads, et la barre de
+ * l'utilisateur, l'emplacement publicitaire Permile, et la barre de
  * progression de la réponse. Remonter avec une `key` différente pour
  * relancer une session.
  */
@@ -102,7 +102,7 @@ export default function LoadingBarAd({
         ) : (
           <div className="ad-slot">
             <div className="ad-content">
-              <div className="ad-sponsor">Secret Ads</div>
+              <div className="ad-sponsor">Permile</div>
               <div className="ad-body">
                 Aucune campagne active pour ce ciblage.
               </div>

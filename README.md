@@ -1,4 +1,4 @@
-# Secret Ads
+# Permile
 
 La régie publicitaire des barres de chargement IA. Les annonceurs diffusent
 leurs publicités pendant que Claude, ChatGPT, Gemini, Mistral ou Perplexity
@@ -31,7 +31,7 @@ curl -X POST "https://VOTRE-DOMAINE/api/track" \
 Ou en une balise :
 
 ```html
-<div data-secret-ads></div>
+<div data-permile></div>
 <script src="https://VOTRE-DOMAINE/sdk.js" data-llm="claude" data-topics="tech" defer></script>
 ```
 

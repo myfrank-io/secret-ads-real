@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Politique de confidentialité — Secret Ads",
+  title: "Politique de confidentialité — Permile",
   description:
-    "Politique de confidentialité de Secret Ads et de son extension navigateur Connecteur LLM.",
+    "Politique de confidentialité de Permile et de son extension navigateur Connecteur LLM.",
 };
 
 export default function PrivacyPage() {
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
         <div>
           <h1>Politique de confidentialité</h1>
           <p className="sub">
-            Secret Ads et l&apos;extension « Secret Ads — Connecteur LLM ».
+            Permile et l&apos;extension « Permile — Connecteur LLM ».
             Dernière mise à jour : juillet 2026.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
       <section className="section">
         <h2>Où vont les données</h2>
         <p className="muted">
-          Les événements publicitaires sont envoyés à l&apos;API Secret Ads
+          Les événements publicitaires sont envoyés à l&apos;API Permile
           uniquement, associés à votre identifiant pseudonyme, afin de
           créditer vos gains et de mesurer les campagnes des annonceurs
           (impressions, clics agrégés). Elles ne sont ni vendues ni partagées

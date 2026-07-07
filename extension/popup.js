@@ -1,4 +1,4 @@
-// Secret Ads — popup : affiche le solde du portefeuille et permet de lier
+// Permile — popup : affiche le solde du portefeuille et permet de lier
 // l'extension à l'identifiant visible sur la page « Gagner de l'argent ».
 
 // ⚙️ Adaptez si votre déploiement est sur un autre domaine

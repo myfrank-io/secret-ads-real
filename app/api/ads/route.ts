@@ -15,7 +15,7 @@ export async function OPTIONS() {
 }
 
 /**
- * Connecteur Secret Ads — endpoint de diffusion.
+ * Connecteur Permile — endpoint de diffusion.
  *
  * GET /api/ads?llm=claude&topics=tech,voyage
  * Renvoie une publicité adaptée au LLM hôte et aux centres d'intérêt

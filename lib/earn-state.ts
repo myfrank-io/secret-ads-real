@@ -5,8 +5,11 @@ import { ALL_TOPICS, Topic } from "./types";
  * /demo (LLM simulé avec le connecteur installé). Persisté en localStorage.
  */
 
-export const STORAGE_KEY = "secret-ads-earn-v1";
-export const UID_KEY = "secret-ads-uid";
+export const STORAGE_KEY = "permile-earn-v1";
+export const UID_KEY = "permile-uid";
+// Anciennes clés (marque précédente) lues en repli pour ne perdre aucun gain
+const LEGACY_STORAGE_KEY = "secret-ads-earn-v1";
+const LEGACY_UID_KEY = "secret-ads-uid";
 
 export interface EarnEvent {
   id: string;
@@ -37,7 +40,9 @@ export const EMPTY_EARN_STATE: EarnState = {
 export function loadEarnState(): EarnState {
   if (typeof window === "undefined") return EMPTY_EARN_STATE;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw =
+      window.localStorage.getItem(STORAGE_KEY) ??
+      window.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return EMPTY_EARN_STATE;
     const parsed = JSON.parse(raw) as Partial<EarnState>;
     const history = Array.isArray(parsed.history)
@@ -82,8 +87,13 @@ export function saveEarnState(state: EarnState): void {
 export function getOrCreateUid(): string {
   if (typeof window === "undefined") return "usr_ssr";
   try {
-    const existing = window.localStorage.getItem(UID_KEY);
-    if (existing && /^[\w-]{1,64}$/.test(existing)) return existing;
+    const existing =
+      window.localStorage.getItem(UID_KEY) ??
+      window.localStorage.getItem(LEGACY_UID_KEY);
+    if (existing && /^[\w-]{1,64}$/.test(existing)) {
+      window.localStorage.setItem(UID_KEY, existing);
+      return existing;
+    }
     const uid = `usr_${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
     window.localStorage.setItem(UID_KEY, uid);
     return uid;

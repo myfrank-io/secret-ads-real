@@ -185,13 +185,13 @@ function createStore(): Store {
 
 // Persiste entre les requêtes d'une même instance (dev + serverless chaude).
 // Limite assumée du MVP : chaque instance serverless a son propre store.
-const globalStore = globalThis as unknown as { __secretAdsStore?: Store };
+const globalStore = globalThis as unknown as { __permileStore?: Store };
 
 export function getStore(): Store {
-  if (!globalStore.__secretAdsStore) {
-    globalStore.__secretAdsStore = createStore();
+  if (!globalStore.__permileStore) {
+    globalStore.__permileStore = createStore();
   }
-  return globalStore.__secretAdsStore;
+  return globalStore.__permileStore;
 }
 
 function computeTotals(daily: DailyMetric[]) {

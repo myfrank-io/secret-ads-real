@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Secret Ads — Connecteur LLM",
+  "name": "Permile — Connecteur LLM",
   "version": "0.1.0",
   "description": "Soyez payé pour voir des pubs pendant que votre IA génère. Compatible Claude, ChatGPT, Gemini, Mistral et Perplexity.",
   "permissions": [
@@ -14,7 +14,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Secret Ads"
+    "default_title": "Permile"
   },
   "content_scripts": [
     {

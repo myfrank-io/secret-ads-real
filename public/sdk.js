@@ -1,8 +1,8 @@
 /**
- * Secret Ads SDK — affiche une publicité "loading bar" dans tout conteneur
- * portant l'attribut [data-secret-ads], et trace impression + clics.
+ * Permile SDK — affiche une publicité "loading bar" dans tout conteneur
+ * portant l'attribut [data-permile], et trace impression + clics.
  *
- * <div data-secret-ads></div>
+ * <div data-permile></div>
  * <script src="https://VOTRE-DOMAINE/sdk.js" data-llm="claude" data-topics="tech" data-uid="usr_votre_id" defer></script>
  */
 (function () {
@@ -22,7 +22,7 @@
   var llm = script.getAttribute("data-llm") || "claude";
   var topics = script.getAttribute("data-topics") || "";
   // Identifiant personnel de l'utilisateur qui a installé le connecteur :
-  // ses gains (vues, clics) remontent sur son portefeuille Secret Ads
+  // ses gains (vues, clics) remontent sur son portefeuille Permile
   var uid = script.getAttribute("data-uid") || "";
 
   function track(campaignId, event) {
@@ -98,7 +98,7 @@
   }
 
   function init() {
-    var containers = document.querySelectorAll("[data-secret-ads]");
+    var containers = document.querySelectorAll("[data-permile],[data-permile]");
     if (containers.length === 0) return;
 
     var qs = "llm=" + encodeURIComponent(llm);

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Secret Ads — Connecteur LLM
+// @name         Permile — Connecteur LLM
 // @namespace    https://secret-ads-real.vercel.app
 // @version      0.1.0
 // @description  Soyez payé pour voir des pubs pendant que votre IA génère ses réponses. Fonctionne sur Claude, ChatGPT, Gemini, Mistral et Perplexity.
@@ -33,25 +33,25 @@
   };
   var llm = LLM_BY_HOST[location.hostname] || "claude";
 
-  // Identifiant Secret Ads : un par navigateur, partagé entre tous les LLM.
+  // Identifiant Permile : un par navigateur, partagé entre tous les LLM.
   // Menu Tampermonkey → « Définir mon identifiant » pour utiliser celui
   // affiché sur votre espace /earn (et retrouver vos gains au même endroit).
-  var uid = GM_getValue("secretAdsUid", "");
+  var uid = GM_getValue("permileUid", "") || GM_getValue("secretAdsUid", "");
   if (!uid) {
     uid =
       "usr_ext_" +
       Date.now().toString(36) +
       Math.floor(Math.random() * 1e6).toString(36);
-    GM_setValue("secretAdsUid", uid);
+    GM_setValue("permileUid", uid);
   }
-  GM_registerMenuCommand("Définir mon identifiant Secret Ads", function () {
+  GM_registerMenuCommand("Définir mon identifiant Permile", function () {
     var v = window.prompt(
-      "Collez votre identifiant Secret Ads (visible sur la page « Gagner de l'argent ») :",
+      "Collez votre identifiant Permile (visible sur la page « Gagner de l'argent ») :",
       uid
     );
     if (v && /^[\w-]{1,64}$/.test(v.trim())) {
       uid = v.trim();
-      GM_setValue("secretAdsUid", uid);
+      GM_setValue("permileUid", uid);
     }
   });
 
@@ -151,7 +151,7 @@
           letterSpacing: "0.06em",
           opacity: "0.6",
         },
-        "Sponsorisé · " + ad.advertiser + " · Secret Ads"
+        "Sponsorisé · " + ad.advertiser + " · Permile"
       );
       var headline = el(
         "div",

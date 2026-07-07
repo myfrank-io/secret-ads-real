@@ -333,7 +333,7 @@ export default function EarnPage() {
       </div>
 
       <div className="card" style={{ marginBottom: "1.5rem" }}>
-        <div className="card-title">Installez Secret Ads sur votre LLM</div>
+        <div className="card-title">Installez Permile sur votre LLM</div>
         <p className="muted small" style={{ marginBottom: "0.8rem" }}>
           Collez ce snippet dans l&apos;interface de votre LLM préféré (ou
           votre extension) : les pubs s&apos;affichent pendant la génération et
@@ -341,7 +341,7 @@ export default function EarnPage() {
           <code>{uid || "…"}</code>, où que vous soyez.
         </p>
         <pre className="codeblock" style={{ marginBottom: "0.9rem" }}>
-          {`<div data-secret-ads></div>
+          {`<div data-permile></div>
 <script src="${typeof window !== "undefined" ? window.location.origin : ""}/sdk.js"
   data-llm="claude"
   data-topics="${state.topics.join(",")}"
@@ -357,7 +357,7 @@ export default function EarnPage() {
           , dézippez, puis <code>chrome://extensions</code> → activez le{" "}
           <em>mode développeur</em> → <em>Charger l&apos;extension non
           empaquetée</em> → sélectionnez le dossier. Cliquez ensuite sur
-          l&apos;icône Secret Ads et collez <code>{uid || "…"}</code> pour
+          l&apos;icône Permile et collez <code>{uid || "…"}</code> pour
           retrouver vos gains ici. (Alternative sans dézippage :{" "}
           <a
             href="https://www.tampermonkey.net/"
@@ -374,7 +374,7 @@ export default function EarnPage() {
           .)
         </p>
         <Link href="/demo" className="btn btn-primary btn-sm">
-          Voir la démo : mon LLM avec Secret Ads installé →
+          Voir la démo : mon LLM avec Permile installé →
         </Link>
       </div>
 

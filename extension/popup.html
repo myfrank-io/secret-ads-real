@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 280px;
+        margin: 0;
+        padding: 14px;
+        background: #1a1a19;
+        color: #fff;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #5b4be0, #9085e9);
+      }
+      .balance {
+        font-size: 26px;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+      }
+      .caption {
+        color: #898781;
+        font-size: 11px;
+        margin-bottom: 10px;
+      }
+      label {
+        display: block;
+        color: #c3c2b7;
+        font-size: 11px;
+        margin-bottom: 4px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #232322;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        color: #fff;
+        padding: 7px 9px;
+        font: inherit;
+        font-size: 12px;
+      }
+      button {
+        margin-top: 8px;
+        width: 100%;
+        border: none;
+        border-radius: 999px;
+        background: #5b4be0;
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        padding: 8px;
+        cursor: pointer;
+      }
+      .ok {
+        color: #3fbf3f;
+        font-size: 11px;
+        margin-top: 6px;
+        min-height: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="brand"><span class="dot"></span>Secret Ads</div>
+    <div class="balance" id="balance">…</div>
+    <div class="caption">
+      solde cumulé (vues : <span id="views">–</span> · clics :
+      <span id="clicks">–</span>)
+    </div>
+    <label for="uid">Mon identifiant Secret Ads</label>
+    <input id="uid" spellcheck="false" autocomplete="off" />
+    <button id="save">Enregistrer</button>
+    <div class="ok" id="msg"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

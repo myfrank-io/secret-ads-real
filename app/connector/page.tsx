@@ -110,21 +110,18 @@ export default function ConnectorPage() {
         <p className="muted small" style={{ marginBottom: "0.8rem" }}>
           Pour les LLM fermés (claude.ai, chatgpt.com, gemini.google.com,
           chat.mistral.ai, perplexity.ai), l&apos;utilisateur installe le
-          connecteur dans SON navigateur :{" "}
-          <a
-            href="https://www.tampermonkey.net/"
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: "var(--accent)" }}
-          >
-            Tampermonkey
+          connecteur dans SON navigateur. Deux formats : l&apos;
+          <a href="/extension.zip" style={{ color: "var(--accent)" }}>
+            extension Chrome native
           </a>{" "}
-          puis <a href="/userscript.user.js" style={{ color: "var(--accent)" }}>
-            /userscript.user.js
+          (Manifest V3 — dossier <code>extension/</code> du repo, publiable
+          telle quelle sur le Chrome Web Store), ou le{" "}
+          <a href="/userscript.user.js" style={{ color: "var(--accent)" }}>
+            userscript Tampermonkey
           </a>
-          . Le script détecte le LLM, affiche la pub pendant la génération et
-          crédite le portefeuille de l&apos;utilisateur — sans rien demander
-          aux plateformes.
+          . Dans les deux cas : détection du LLM hôte, pub affichée pendant la
+          génération, gains crédités sur le portefeuille de
+          l&apos;utilisateur — sans rien demander aux plateformes.
         </p>
       </section>
 

@@ -349,8 +349,16 @@ export default function EarnPage() {
   defer></script>`}
         </pre>
         <p className="muted small" style={{ marginBottom: "0.8rem" }}>
-          <strong>Ou en extension navigateur</strong> (claude.ai, chatgpt.com,
-          gemini.google.com, chat.mistral.ai, perplexity.ai) : installez{" "}
+          <strong>Ou en extension Chrome</strong> (claude.ai, chatgpt.com,
+          gemini.google.com, chat.mistral.ai, perplexity.ai) :{" "}
+          <a href="/extension.zip" style={{ color: "var(--accent)" }}>
+            téléchargez l&apos;extension
+          </a>
+          , dézippez, puis <code>chrome://extensions</code> → activez le{" "}
+          <em>mode développeur</em> → <em>Charger l&apos;extension non
+          empaquetée</em> → sélectionnez le dossier. Cliquez ensuite sur
+          l&apos;icône Secret Ads et collez <code>{uid || "…"}</code> pour
+          retrouver vos gains ici. (Alternative sans dézippage :{" "}
           <a
             href="https://www.tampermonkey.net/"
             target="_blank"
@@ -358,13 +366,12 @@ export default function EarnPage() {
             style={{ color: "var(--accent)" }}
           >
             Tampermonkey
-          </a>
-          , puis{" "}
+          </a>{" "}
+          +{" "}
           <a href="/userscript.user.js" style={{ color: "var(--accent)" }}>
-            cliquez ici pour installer le connecteur
+            le userscript
           </a>
-          . Enfin, menu Tampermonkey → « Définir mon identifiant Secret Ads »
-          → collez <code>{uid || "…"}</code> pour retrouver vos gains ici.
+          .)
         </p>
         <Link href="/demo" className="btn btn-primary btn-sm">
           Voir la démo : mon LLM avec Secret Ads installé →

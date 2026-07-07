@@ -23,6 +23,7 @@ export default function RootLayout({
               Permile
             </Link>
             <nav className="nav-links">
+              <Link href="/dev">Devs</Link>
               <Link href="/advertiser">Annonceurs</Link>
               <Link href="/earn">Gagner de l&apos;argent</Link>
               <Link href="/demo">Démo</Link>

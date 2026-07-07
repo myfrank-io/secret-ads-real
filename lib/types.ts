@@ -1,7 +1,17 @@
-export type LLMTarget = "claude" | "chatgpt" | "gemini" | "mistral" | "perplexity";
+export type LLMTarget =
+  | "claude"
+  | "chatgpt"
+  | "gemini"
+  | "mistral"
+  | "perplexity"
+  | "claude-code"
+  | "cursor";
 
 export type Topic =
   | "tech"
+  | "devtools"
+  | "cloud"
+  | "ia"
   | "voyage"
   | "mode"
   | "food"
@@ -73,10 +83,15 @@ export const LLM_LABELS: Record<LLMTarget, string> = {
   gemini: "Gemini",
   mistral: "Mistral",
   perplexity: "Perplexity",
+  "claude-code": "Claude Code",
+  cursor: "Cursor",
 };
 
 export const TOPIC_LABELS: Record<Topic, string> = {
   tech: "Tech",
+  devtools: "Dev tools",
+  cloud: "Cloud",
+  ia: "IA",
   voyage: "Voyage",
   mode: "Mode",
   food: "Food",
@@ -92,10 +107,15 @@ export const ALL_LLMS: LLMTarget[] = [
   "gemini",
   "mistral",
   "perplexity",
+  "claude-code",
+  "cursor",
 ];
 
 export const ALL_TOPICS: Topic[] = [
   "tech",
+  "devtools",
+  "cloud",
+  "ia",
   "voyage",
   "mode",
   "food",

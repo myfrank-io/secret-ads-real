@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import ConnectorPlayground from "@/components/ConnectorPlayground";
 
 export const metadata: Metadata = {
-  title: "Connecteur — Secret Ads",
+  title: "Connecteur — Permile",
   description:
-    "Intégrez des publicités Secret Ads dans la barre de chargement de n'importe quel LLM : API REST + SDK JavaScript.",
+    "Intégrez des publicités Permile dans la barre de chargement de n'importe quel LLM : API REST + SDK JavaScript.",
 };
 
 const CURL_EXAMPLE = `curl "https://VOTRE-DOMAINE/api/ads?llm=claude&topics=tech,voyage"`;
@@ -33,10 +33,10 @@ const TRACK_EXAMPLE = `curl -X POST "https://VOTRE-DOMAINE/api/track" \\
   -d '{ "campaignId": "cmp_notion", "event": "impression" }'`;
 
 const SDK_EXAMPLE = `<!-- 1. Un conteneur là où la barre de chargement s'affiche -->
-<div data-secret-ads></div>
+<div data-permile></div>
 
-<!-- 2. Le SDK : il remplit tous les conteneurs [data-secret-ads].
-     data-uid = l'identifiant Secret Ads de l'utilisateur qui a installé
+<!-- 2. Le SDK : il remplit tous les conteneurs [data-permile].
+     data-uid = l'identifiant Permile de l'utilisateur qui a installé
      le connecteur : ses gains remontent sur son portefeuille. -->
 <script
   src="https://VOTRE-DOMAINE/sdk.js"
@@ -57,7 +57,7 @@ export default function ConnectorPage() {
         <div>
           <h1>Le connecteur LLM</h1>
           <p className="sub">
-            Une seule intégration pour diffuser des publicités Secret Ads dans
+            Une seule intégration pour diffuser des publicités Permile dans
             la barre de chargement de Claude, ChatGPT, Gemini, Mistral ou
             Perplexity : une API REST minimaliste, ou un SDK JavaScript à
             coller tel quel.
@@ -99,7 +99,7 @@ export default function ConnectorPage() {
         <h2>3. Ou en une balise : le SDK</h2>
         <p className="muted small" style={{ marginBottom: "0.8rem" }}>
           Le SDK récupère une pub, l&apos;affiche dans vos conteneurs{" "}
-          <code>[data-secret-ads]</code> et envoie automatiquement
+          <code>[data-permile]</code> et envoie automatiquement
           l&apos;impression et les clics au tracking.
         </p>
         <pre className="codeblock">{SDK_EXAMPLE}</pre>

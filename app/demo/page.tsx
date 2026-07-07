@@ -30,9 +30,9 @@ const SUGGESTIONS = [
 ];
 
 const CANNED_ANSWERS = [
-  "Excellente question ! Voici une synthèse structurée : d'abord les critères qui comptent vraiment, ensuite un comparatif rapide, et enfin ma recommandation selon votre profil. (réponse simulée pour la démo Secret Ads)",
-  "Voici ce que je propose, étape par étape, avec les points d'attention et deux alternatives si vous voulez ajuster le budget ou le rythme. (réponse simulée pour la démo Secret Ads)",
-  "Bonne idée — je vous ai préparé un plan clair avec les essentiels, les pièges à éviter et une checklist actionnable dès aujourd'hui. (réponse simulée pour la démo Secret Ads)",
+  "Excellente question ! Voici une synthèse structurée : d'abord les critères qui comptent vraiment, ensuite un comparatif rapide, et enfin ma recommandation selon votre profil. (réponse simulée pour la démo Permile)",
+  "Voici ce que je propose, étape par étape, avec les points d'attention et deux alternatives si vous voulez ajuster le budget ou le rythme. (réponse simulée pour la démo Permile)",
+  "Bonne idée — je vous ai préparé un plan clair avec les essentiels, les pièges à éviter et une checklist actionnable dès aujourd'hui. (réponse simulée pour la démo Permile)",
 ];
 
 interface Exchange {
@@ -144,7 +144,7 @@ export default function DemoPage() {
     ]);
 
     // Génération simulée : la barre progresse pendant ~5 s, la pub est
-    // visible pendant tout ce temps — c'est l'emplacement Secret Ads
+    // visible pendant tout ce temps — c'est l'emplacement Permile
     const started = Date.now();
     const durationMs = 5000;
     if (timerRef.current) clearInterval(timerRef.current);
@@ -205,7 +205,7 @@ export default function DemoPage() {
     <main className="shell page">
       <div className="page-head">
         <div>
-          <h1>Votre LLM, avec Secret Ads installé</h1>
+          <h1>Votre LLM, avec Permile installé</h1>
           <p className="sub">
             Démo du connecteur : discutez normalement — pendant que l&apos;IA
             « génère », la pub s&apos;affiche dans la barre de chargement et
@@ -248,7 +248,7 @@ export default function DemoPage() {
               display: "inline-block",
             }}
           />
-          {LLM_LABELS[llm]} — connecteur Secret Ads actif
+          {LLM_LABELS[llm]} — connecteur Permile actif
         </div>
         <div
           className="llm-frame-body"
@@ -306,7 +306,7 @@ export default function DemoPage() {
               ) : (
                 <div className="ad-slot">
                   <div className="ad-content">
-                    <div className="ad-sponsor">Secret Ads</div>
+                    <div className="ad-sponsor">Permile</div>
                     <div className="ad-body">
                       Aucune campagne active pour ce ciblage.
                     </div>

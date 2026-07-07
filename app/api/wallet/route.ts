@@ -14,7 +14,7 @@ export async function OPTIONS() {
 }
 
 /**
- * Connecteur Secret Ads — portefeuille utilisateur.
+ * Connecteur Permile — portefeuille utilisateur.
  *
  * GET /api/wallet?uid=usr_xxx
  * Renvoie le solde serveur accumulé par cet utilisateur via le connecteur

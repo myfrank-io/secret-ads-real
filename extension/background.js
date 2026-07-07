@@ -1,4 +1,4 @@
-// Secret Ads — service worker : centralise les appels API (CSP-proof,
+// Permile — service worker : centralise les appels API (CSP-proof,
 // les content scripts passent par ici via messages).
 
 // ⚙️ Adaptez si votre déploiement est sur un autre domaine

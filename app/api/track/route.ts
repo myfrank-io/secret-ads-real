@@ -17,7 +17,7 @@ export async function OPTIONS() {
 const VALID_EVENTS: TrackEvent[] = ["impression", "click", "conversion"];
 
 /**
- * Connecteur Secret Ads — endpoint de tracking.
+ * Connecteur Permile — endpoint de tracking.
  *
  * POST /api/track { campaignId: string, event: "impression" | "click" | "conversion" }
  * Enregistre l'événement côté annonceur et renvoie la rémunération

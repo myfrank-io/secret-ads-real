@@ -1,4 +1,4 @@
-// Secret Ads — content script : détecte l'envoi d'un prompt sur le site LLM
+// Permile — content script : détecte l'envoi d'un prompt sur le site LLM
 // hôte, affiche la carte sponsorisée pendant la génération et remonte
 // vues/clics au service worker (qui parle à l'API avec votre uid).
 
@@ -90,7 +90,7 @@
           letterSpacing: "0.06em",
           opacity: "0.6",
         },
-        "Sponsorisé · " + ad.advertiser + " · Secret Ads"
+        "Sponsorisé · " + ad.advertiser + " · Permile"
       )
     );
     content.appendChild(

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Secret Ads — Connecteur LLM",
+  "version": "0.1.0",
+  "description": "Soyez payé pour voir des pubs pendant que votre IA génère ses réponses. Fonctionne sur Claude, ChatGPT, Gemini, Mistral et Perplexity.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://secret-ads-real.vercel.app/*"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Secret Ads"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://claude.ai/*",
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://chat.mistral.ai/*",
+        "https://www.perplexity.ai/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
